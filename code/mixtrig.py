@@ -183,11 +183,23 @@ if __name__ == "__main__":
     args = cliparser.parse_args()
     
     # Read global config
-    gconf = configparser.ConfigParser()
-    gconf.read(args.conf)
+    try:
+        with open(args.conf, 'r') as f:
+            gconf = configparser.ConfigParser()
+            gconf.read_file(f)
+    except FileNotFoundError:
+        print("Error: cannot read main config file '%s'" % args.conf, file=sys.stderr)
+        sys.exit(1)
     
     # Read per-source config
-    src_glob = os.path.join(gconf['sources']['sources_dir'], '*.conf')
+    if gconf['sources']['sources_dir'].startswith('/'):
+        sources_dir = gconf['sources']['sources_dir']
+    else:
+        sources_dir = os.path.join(
+            os.path.dirname(args.conf),
+            gconf['sources']['sources_dir']
+        )
+    src_glob = os.path.join(sources_dir, '*.conf')
     print("Loading sources from %s" % src_glob)
     for f in glob.glob(src_glob):
         print("Reading per-source conf %s" % f)

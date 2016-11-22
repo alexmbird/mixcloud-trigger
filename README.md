@@ -65,7 +65,7 @@ Global config follows the format:
 
 | Section | Key | Default | Description |
 |---|---|---|---|
-| `sources` | `sources_dir` | - | Directory to look in for per-source configs.  |
+| `sources` | `sources_dir` | - | Directory to look in for per-source configs.  If it starts with a `/` it's treated as an absolute path; without and it's relative to the dir the main config file was in. |
 | `metadata` | `metadata_path` | - | Directory in which per-source metadata will be stored |
 
 
@@ -111,7 +111,7 @@ $ . _venv3/bin/activate
 
 (_venv3) $ ./code/mixtrig.py -h    # display help
 
-(_venv3) $ ./code/mixtrig.py [-c <global_conf_file>]
+(_venv3) $ ./code/mixtrig.py -c examples/conf/main.conf
 ```
 
 
