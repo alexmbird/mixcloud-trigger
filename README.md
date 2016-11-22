@@ -105,6 +105,8 @@ Anything `/bin/sh` can handle, `item_action` can handle.  Your action is written
 * Environment vars work - e.g. `cd $HOME; do_something_with {url}`
 * `sudo` if you want to, but secure it properly
 
+Python's `subprocess` module has problems handling very large amounts of output from a command.  This includes basically anything that prints a progress bar.  If you're calling some utility and it has a `--quiet` option, try to use it.
+
 
 ### all_action format
 
