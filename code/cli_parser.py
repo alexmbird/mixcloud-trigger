@@ -5,7 +5,7 @@
 import argparse
 
 cliparser = argparse.ArgumentParser(
-    prog="mixcloud-trigger",
+    # prog="mixcloud-trigger",
     description='Run local actions when new items are added to MixCloud'
 )
 cliparser.add_argument('--conf', '-c', type=str, default='conf/main.conf',

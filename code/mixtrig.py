@@ -12,6 +12,7 @@ import sys
 import subprocess, shlex, tempfile
 import os, os.path, glob
 import configparser
+from clint.textui import puts, indent, colored
 
 
 from cli_parser import cliparser
@@ -52,14 +53,14 @@ class MixCloudItem(object):
             script.write(bytes(cmd, 'utf8'))
             script.flush()
             with open(script.name, 'r') as f:
-                print("  Will exec: %s" % f.read())
+                puts("Will exec: %s" % f.read())
             cp = subprocess.run(
                 ['/bin/sh', script.name],
                 check=True,
                 stdout=subprocess.PIPE, 
                 stderr=subprocess.STDOUT
             )
-        print("  Output: %s" % cp.stdout)
+        puts("Output: %s" % cp.stdout)
 
 
 
@@ -108,7 +109,7 @@ class MixCloudSource(object):
                     cc['url'], cc['created_time']
                 )
             except KeyError as e:
-                print(e)
+                puts(colored.red(e))
                 pp = pprint.PrettyPrinter(indent=4)
                 pp.pprint(cc)
                 raise
@@ -130,8 +131,8 @@ class MixCloudSource(object):
         # pp = pprint.PrettyPrinter(indent=4)
         # pp.pprint(self.metadata)
         
-        n_yielded = 0
-        max_items = self.source_conf.getint('max_items', None)
+        n_items     = 0
+        max_items   = self.source_conf.getint('max_items', None)
         
         for obj in j['data']:
             t = obj['type']
@@ -142,15 +143,15 @@ class MixCloudSource(object):
                         ctime_epoch = float( mci.created_time.strftime("%s") )
                         if force_all or ctime_epoch > self.metadata['last_scrape']:
                             yield mci
-                            n_yielded += 1
-                            if max_items:
-                                if not force_all:
-                                    if n_yielded >= max_items:
-                                        print("Reached max_items of %d for %s" % (max_items, self.source_name))
-                                        break
+                    n_items += 1  # Counting feed items, not cc's
+                    if max_items:
+                        if not force_all:
+                            if n_items >= max_items:
+                                puts(colored.magenta("Reached max_items of %d for %s" % (max_items, self.source_name)))
+                                break
                             
                 else:
-                    print("Don't know how to handle requested type '%s'" % t, file=sys.stderr)
+                    puts_err(colored.red("Don't know how to handle requested type '%s'" % t))
                     # pp = pprint.PrettyPrinter(indent=4)
                     # pp.pprint(obj)
                     # sys.exit(0)
@@ -188,7 +189,7 @@ if __name__ == "__main__":
             gconf = configparser.ConfigParser()
             gconf.read_file(f)
     except FileNotFoundError:
-        print("Error: cannot read main config file '%s'" % args.conf, file=sys.stderr)
+        puts_err(colored.red("Error: cannot read main config file '%s'" % args.conf))
         sys.exit(1)
     
     # Read per-source config
@@ -200,9 +201,9 @@ if __name__ == "__main__":
             gconf['sources']['sources_dir']
         )
     src_glob = os.path.join(sources_dir, '*.conf')
-    print("Loading sources from %s" % src_glob)
+    puts("Loading sources from %s" % src_glob)
     for f in glob.glob(src_glob):
-        print("Reading per-source conf %s" % f)
+        puts("Reading per-source conf %s" % f)
         sconf = configparser.ConfigParser()
         sconf.read(f)
         for source_name in sconf.sections():
@@ -210,7 +211,8 @@ if __name__ == "__main__":
             with MixCloudSourceFeed(gconf, source_name, this_src_conf) as s:
                 items = s.get_new_items(force_all=args.all)
                 for i in items:
-                    print("%s" % i)
-                    if 'item_action' in this_src_conf:
-                        i.shell_action(this_src_conf['item_action'])
+                    puts(colored.green("%s" % i))
+                    with indent(4):
+                        if 'item_action' in this_src_conf:
+                            i.shell_action(this_src_conf['item_action'])
 

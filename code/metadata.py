@@ -4,6 +4,7 @@
 
 import json
 import sys
+from clint.textui import puts, indent, colored
 
 
 class Metadata(dict):
@@ -20,7 +21,7 @@ class Metadata(dict):
         """Persist metadata for this source"""
         with open(self.filename, 'w') as f:
             json.dump(self, f)
-        print("Saved metadata to %s" % (self.filename,))
+        puts("Saved metadata to %s" % (self.filename,))
 
     
     def load(self):
@@ -29,9 +30,9 @@ class Metadata(dict):
             with open(self.filename, 'r') as f:
                 for k, v in json.load(f).items():
                     self[k] = v
-            print("Loaded metadata from %s" % (self.filename,))
+            puts("Loaded metadata from %s" % (self.filename,))
         except FileNotFoundError:
             for k, v in self.defaults.items():
                 self[k] = v
             self.save()
-            print("Created new metadata %s" % self.filename, file=sys.stderr)
+            puts("Created new metadata %s" % self.filename)
