@@ -132,6 +132,7 @@ To ensure no item gets processed twice, information on each stream is stored in 
 
 * Better input-checking on config
 * Make `all_action` work
+* Mutleythreading for shell actions
 * Prettier output with [clint](https://github.com/kennethreitz/clint)
 
 
