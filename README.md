@@ -96,6 +96,19 @@ Python's String.format() is used to interpolate variables into your command for 
 | `type` | The type of feed item, e.g. `upload`, `favorite` |
 | `created_time` | Time the item was created on MixCloud |
 
+Variables are escaped with `shlex.quote()`.  Your command isn't; be careful with it.
+
+Anything `/bin/sh` can handle, `item_action` can handle.  Your action is written to a temporary file and passed to the local `/bin/sh` for execution.  This means...
+
+* `;` can be used to separate multiple commands.  e.g. `cd /path/to/somewhere; do_something_with {url}`
+* Pipes work just fine
+* Environment vars work - e.g. `cd $HOME; do_something_with {url}`
+* `sudo` if you want to, but secure it properly
+
+
+### all_action format
+
+TBA.
 
 
 ## Running
