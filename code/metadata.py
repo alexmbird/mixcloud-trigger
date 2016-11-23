@@ -4,7 +4,7 @@
 
 import json
 import sys
-from clint.textui import puts, indent, colored
+from clint.textui import puts, puts_err, indent, colored
 
 
 class Metadata(dict):

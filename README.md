@@ -149,6 +149,7 @@ $ . _venv3/bin/activate
 * Better input-checking on config
 * Make `all_action` work
 * Mutleythreading for shell actions
+* Retry for failed actions
 
 
 ### Pull Requests

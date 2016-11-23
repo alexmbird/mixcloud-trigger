@@ -12,7 +12,7 @@ import sys
 import subprocess, shlex, tempfile
 import os, os.path, glob
 import configparser
-from clint.textui import puts, indent, colored
+from clint.textui import puts, puts_err, indent, colored
 
 
 from cli_parser import cliparser
