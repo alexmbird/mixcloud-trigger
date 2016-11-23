@@ -66,7 +66,6 @@ class MixCloudItem(object):
                 try:
                     output = subprocess.check_output(
                         ['/bin/sh', script.name],
-                        stdout=subprocess.PIPE, 
                         stderr=subprocess.STDOUT
                     )
                 except subprocess.CalledProcessError as e:
