@@ -166,7 +166,7 @@ class MixCloudSource(object):
             self.METADATA_SUBDIR
         )
         if not os.path.isdir(my_metadata_dir):
-            os.mkdir(my_metadata_dir)
+            os.makedirs(my_metadata_dir)
         return os.path.join(my_metadata_dir, self.source_name+'.json')
 
 
