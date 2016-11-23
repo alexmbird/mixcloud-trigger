@@ -18,7 +18,7 @@ Why?  Because...
 
 ## Requirements
 
-*  Python 3.5 &amp; (probably included) pyvenv.  On OSX with [homebrew](http://brew.sh/), `brew install python3`
+*  Python 3 &amp; (probably included) pyvenv.  On OSX with [homebrew](http://brew.sh/), `brew install python3`
 
 
 

@@ -54,13 +54,26 @@ class MixCloudItem(object):
             script.flush()
             with open(script.name, 'r') as f:
                 puts("Will exec: %s" % f.read())
-            cp = subprocess.run(
-                ['/bin/sh', script.name],
-                check=True,
-                stdout=subprocess.PIPE, 
-                stderr=subprocess.STDOUT
-            )
-        puts("Output: %s" % cp.stdout)
+            with indent(4):
+                # Not available until Python 3.5
+                # cp = subprocess.run(
+                #     ['/bin/sh', script.name],
+                #     check=True,
+                #     stdout=subprocess.PIPE, 
+                #     stderr=subprocess.STDOUT
+                # )
+                
+                try:
+                    output = subprocess.check_output(
+                        ['/bin/sh', script.name],
+                        stdout=subprocess.PIPE, 
+                        stderr=subprocess.STDOUT
+                    )
+                except subprocess.CalledProcessError as e:
+                    puts_err(colored.red("Action returned error code %d" % e.returncode))
+                    puts_err(e.output)
+                else:
+                    puts("Output: %s" % output)
 
 
 
