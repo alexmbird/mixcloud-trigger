@@ -11,17 +11,19 @@ class Metadata(dict):
     
     """Simple JSON Metadata persistence"""
     
-    def __init__(self, filename, defaults):
+    def __init__(self, filename, defaults, verbose=False):
         super(Metadata,self).__init__()
         self.filename = filename
         self.defaults = defaults
+        self.verbose  = verbose
     
     
     def save(self):
         """Persist metadata for this source"""
         with open(self.filename, 'w') as f:
             json.dump(self, f)
-        puts("Saved metadata to %s" % (self.filename,))
+        if self.verbose:
+            puts("Saved metadata to %s" % (self.filename,))
 
     
     def load(self):
@@ -30,9 +32,11 @@ class Metadata(dict):
             with open(self.filename, 'r') as f:
                 for k, v in json.load(f).items():
                     self[k] = v
-            puts("Loaded metadata from %s" % (self.filename,))
+            if self.verbose:
+                puts("Loaded metadata from %s" % (self.filename,))
         except FileNotFoundError:
             for k, v in self.defaults.items():
                 self[k] = v
             self.save()
-            puts("Created new metadata %s" % self.filename)
+            if self.verbose:
+                puts("Created new metadata %s" % self.filename)

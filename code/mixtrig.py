@@ -100,7 +100,9 @@ class MixCloudSource(object):
         self.verbose        = verbose
         self.metadata       = Metadata(
             self._metadata_path_name(), 
-            self.DEFAULT_METADATA )
+            self.DEFAULT_METADATA,
+            verbose=self.verbose 
+        )
         self.n_yielded      = 0
 
     
@@ -110,7 +112,7 @@ class MixCloudSource(object):
 
     
     def __exit__(self, type, value, traceback):
-        self.metadata.save(verbose=self.verbose)
+        self.metadata.save()
     
     
     def _get_data(self, *args):
