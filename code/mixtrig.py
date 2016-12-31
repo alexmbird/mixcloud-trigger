@@ -92,11 +92,12 @@ class MixCloudSource(object):
         'last_scrape': 0
     }
     
-    def __init__(self, gconf, source_name, source_conf):
+    def __init__(self, gconf, source_name, source_conf, verbose=False):
         super(MixCloudSource, self).__init__()
         self.global_conf    = gconf
         self.source_name    = source_name
         self.source_conf    = source_conf
+        self.verbose        = verbose
         self.metadata       = Metadata(
             self._metadata_path_name(), 
             self.DEFAULT_METADATA )
@@ -109,7 +110,7 @@ class MixCloudSource(object):
 
     
     def __exit__(self, type, value, traceback):
-        self.metadata.save()
+        self.metadata.save(verbose=self.verbose)
     
     
     def _get_data(self, *args):
@@ -150,7 +151,7 @@ class MixCloudSource(object):
             return "never"
 
 
-    def get_new_items(self, want_types=None, force_all=False, verbose=False):
+    def get_new_items(self, want_types=None, force_all=False):
         """Return new items we found"""
         wt = self.source_conf.get('want_types', 'upload,favorite').split(',')
         j = self._get_data()
@@ -173,7 +174,7 @@ class MixCloudSource(object):
                             else:
                                 puts(colored.red("Ignored (> max_items): %s" % mci))
                         else:
-                            if verbose:
+                            if self.verbose:
                                 puts(colored.red("Ignored (before last scrape): %s" % mci))
                     n_items += 1  # Counting feed items, not cc's
                     if max_items:
@@ -243,10 +244,10 @@ if __name__ == "__main__":
             sconf.read(f)
             for source_name in sconf.sections():
                 this_src_conf = sconf[source_name]
-                with MixCloudSourceFeed(gconf, source_name, this_src_conf) as s:
+                with MixCloudSourceFeed(gconf, source_name, this_src_conf, verbose=args.verbose) as s:
                     if args.verbose:
                         puts("Last scrape: %s" % s.last_scrape_str())
-                    items = s.get_new_items(force_all=args.all, verbose=args.verbose)
+                    items = s.get_new_items(force_all=args.all)
                     for i in items:
                         puts(colored.green("%s" % i))
                         with indent(2):
