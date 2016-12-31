@@ -9,7 +9,7 @@ from clint.textui import puts, puts_err, indent, colored
 
 class Metadata(dict):
     
-    """Simple JSON Metadata persistence"""
+    """Simple JSON Metadata persistence; backed to a file full of JSON"""
     
     def __init__(self, filename, defaults, verbose=False):
         super(Metadata,self).__init__()
