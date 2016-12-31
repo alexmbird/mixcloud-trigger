@@ -107,7 +107,7 @@ class MixCloudSource(object):
 
     
     def __enter__(self):
-        self.metadata.load()
+        # self.metadata.load()  # implicit now
         return self
 
     

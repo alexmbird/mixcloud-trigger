@@ -16,6 +16,7 @@ class Metadata(dict):
         self.filename = filename
         self.defaults = defaults
         self.verbose  = verbose
+        self.load()
     
     
     def save(self):
