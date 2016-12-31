@@ -54,7 +54,7 @@ class MixCloudItem(object):
             script.flush()
             with open(script.name, 'r') as f:
                 puts("Will exec: %s" % f.read())
-            with indent(4):
+            with indent(2):
                 # Not available until Python 3.5
                 # cp = subprocess.run(
                 #     ['/bin/sh', script.name],
@@ -121,7 +121,7 @@ class MixCloudSource(object):
                     cc['url'], cc['created_time']
                 )
             except KeyError as e:
-                puts(colored.red(e))
+                puts_err(colored.red(e))
                 pp = pprint.PrettyPrinter(indent=4)
                 pp.pprint(cc)
                 raise
@@ -136,8 +136,8 @@ class MixCloudSource(object):
 
 
     
-    def get_new_items(self, want_types=None, force_all=False):
-        """Return any new items we found"""
+    def get_new_items(self, want_types=None, force_all=False, verbose=False):
+        """Return new items we found"""
         wt = self.source_conf.get('want_types', 'upload,favorite').split(',')
         j = self._get_data()
         # pp = pprint.PrettyPrinter(indent=4)
@@ -154,13 +154,18 @@ class MixCloudSource(object):
                     for mci in funk(self, obj):
                         ctime_epoch = float( mci.created_time.strftime("%s") )
                         if force_all or ctime_epoch > self.metadata['last_scrape']:
-                            yield mci
+                            if n_items < max_items or max_items is None:
+                                yield mci
+                            else:
+                                puts(colored.red("Ignored (> max_items): %s" % mci))
+                        else:
+                            if verbose:
+                                puts(colored.red("Ignored (before last scrape): %s" % mci))
                     n_items += 1  # Counting feed items, not cc's
                     if max_items:
                         if not force_all:
-                            if n_items >= max_items:
+                            if n_items == max_items:
                                 puts(colored.magenta("Reached max_items of %d for %s" % (max_items, self.source_name)))
-                                break
                             
                 else:
                     puts_err(colored.red("Don't know how to handle requested type '%s'" % t))
@@ -197,6 +202,8 @@ if __name__ == "__main__":
     
     # Read global config
     try:
+        if args.verbose:
+            puts("Reading config from %s" % args.conf)
         with open(args.conf, 'r') as f:
             gconf = configparser.ConfigParser()
             gconf.read_file(f)
@@ -213,18 +220,20 @@ if __name__ == "__main__":
             gconf['sources']['sources_dir']
         )
     src_glob = os.path.join(sources_dir, '*.conf')
-    puts("Loading sources from %s" % src_glob)
+    if args.verbose:
+        puts("Loading sources from %s" % src_glob)
     for f in glob.glob(src_glob):
-        puts("Reading per-source conf %s" % f)
-        sconf = configparser.ConfigParser()
-        sconf.read(f)
-        for source_name in sconf.sections():
-            this_src_conf = sconf[source_name]
-            with MixCloudSourceFeed(gconf, source_name, this_src_conf) as s:
-                items = s.get_new_items(force_all=args.all)
-                for i in items:
-                    puts(colored.green("%s" % i))
-                    with indent(4):
-                        if 'item_action' in this_src_conf:
-                            i.shell_action(this_src_conf['item_action'])
+        puts("Handling per-source conf %s" % f)
+        with indent(2):
+            sconf = configparser.ConfigParser()
+            sconf.read(f)
+            for source_name in sconf.sections():
+                this_src_conf = sconf[source_name]
+                with MixCloudSourceFeed(gconf, source_name, this_src_conf) as s:
+                    items = s.get_new_items(force_all=args.all, verbose=args.verbose)
+                    for i in items:
+                        puts(colored.green("%s" % i))
+                        with indent(2):
+                            if 'item_action' in this_src_conf:
+                                i.shell_action(this_src_conf['item_action'])
 
