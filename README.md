@@ -13,7 +13,6 @@ Why?  Because...
 
 1.  I kept missing new uploads by my favourite DJ
 2.  The [MixCloud API](https://www.mixcloud.com/developers/) makes it easy
-3.  It made a good excuse for staying indoors one cold November day
 
 
 ## Requirements
@@ -134,7 +133,7 @@ $ . _venv3/bin/activate
 
 * To ensure no item gets processed twice, information on each stream is stored in a .json file within `data/` 
 * Coloured/indented output with [clint](https://github.com/kennethreitz/clint)
-
+* Limited test coverage via basic Python unittest module
 
 
 ## Meta
@@ -143,6 +142,14 @@ $ . _venv3/bin/activate
 
 * MixCloud's API returns 20 items per page and we don't yet support pagination.  Thus if there are more than 20 new items since the last scrape (and you set `max_items` > 20), the oldest ones will be overlooked.
 
+
+## Coding
+
+### Tests
+
+```
+$ python -m unittest discover code/
+```
 
 ### Todo
 
@@ -157,6 +164,6 @@ $ . _venv3/bin/activate
 Yes please!
 
 
-### License
+## License
 
 GPLv3.
