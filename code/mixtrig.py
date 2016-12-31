@@ -6,6 +6,7 @@
 
 import requests
 import time
+import datetime
 from dateutil.parser import parse as du_parse
 import pprint
 import sys
@@ -17,6 +18,11 @@ from clint.textui import puts, puts_err, indent, colored
 
 from cli_parser import cliparser
 from metadata import Metadata
+
+
+
+PRINTABLE_DATETIME_FORMAT = "%c"
+
 
 
 class MixCloudItem(object):
@@ -135,7 +141,15 @@ class MixCloudSource(object):
     }
 
 
-    
+    def last_scrape_str(self):
+        """Return printable string representing last scrape point"""
+        if self.metadata['last_scrape']:
+            dt = datetime.datetime.utcfromtimestamp(self.metadata['last_scrape'])
+            return dt.strftime(PRINTABLE_DATETIME_FORMAT)
+        else:
+            return "never"
+
+
     def get_new_items(self, want_types=None, force_all=False, verbose=False):
         """Return new items we found"""
         wt = self.source_conf.get('want_types', 'upload,favorite').split(',')
@@ -230,6 +244,8 @@ if __name__ == "__main__":
             for source_name in sconf.sections():
                 this_src_conf = sconf[source_name]
                 with MixCloudSourceFeed(gconf, source_name, this_src_conf) as s:
+                    if args.verbose:
+                        puts("Last scrape: %s" % s.last_scrape_str())
                     items = s.get_new_items(force_all=args.all, verbose=args.verbose)
                     for i in items:
                         puts(colored.green("%s" % i))
