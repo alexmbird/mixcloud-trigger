@@ -14,6 +14,8 @@ Why?  Because...
 1.  I kept missing new uploads by my favourite DJ
 2.  The [MixCloud API](https://www.mixcloud.com/developers/) makes it easy
 
+You'll probably want to run this from a cron, so it has built-in locking to ensure no more than one instance runs at once.
+
 
 ## Requirements
 
@@ -65,7 +67,7 @@ Global config follows the format:
 | Section | Key | Default | Description |
 |---|---|---|---|
 | `sources` | `sources_dir` | - | Directory to look in for per-source configs.  If it starts with a `/` it's treated as an absolute path; without and it's relative to the dir the main config file was in. |
-| `metadata` | `metadata_path` | - | Directory in which per-source metadata will be stored |
+| `metadata` | `metadata_path` | - | Directory in which locks &amp; per-source metadata will be stored |
 
 
 Per-source config must be:

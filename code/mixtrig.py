@@ -14,6 +14,7 @@ import subprocess, shlex, tempfile
 import os, os.path, glob
 import configparser
 from clint.textui import puts, puts_err, indent, colored
+import filelock
 
 
 from cli_parser import cliparser
@@ -227,6 +228,15 @@ if __name__ == "__main__":
     except FileNotFoundError:
         puts_err(colored.red("Error: cannot read main config file '%s'" % args.conf))
         sys.exit(1)
+    
+    # Only one instance should be running at once.  Do file-based locking.
+    lock_path = os.path.join(gconf['metadata']['metadata_path'], 'mixcloud-trigger.lock')
+    lock = filelock.FileLock(lock_path)
+    try:
+        lock.acquire(timeout=5)
+    except  filelock.Timeout as e:
+        puts_err(colored.red(str(e)))
+        sys.exit(0)
     
     # Read per-source config
     if gconf['sources']['sources_dir'].startswith('/'):
