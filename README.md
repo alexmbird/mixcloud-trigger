@@ -22,6 +22,12 @@ You'll probably want to run this from a cron, so it has built-in locking to ensu
 *  Python 3 &amp; (probably included) pyvenv.  On OSX with [homebrew](http://brew.sh/), `brew install python3`
 
 
+## Features
+
+* Record successful processing so that item won't be touched again
+* Retry failed actions on the next run
+* Limit to N most recent items
+
 
 ## Setup
 
@@ -158,7 +164,6 @@ $ python -m unittest discover code/
 * Better input-checking on config
 * Make `all_action` work
 * Mutleythreading for shell actions
-* Retry for failed actions
 
 
 ### Pull Requests

@@ -79,6 +79,7 @@ class MixCloudItem(object):
                 except subprocess.CalledProcessError as e:
                     puts_err(colored.red("Action returned error code %d" % e.returncode))
                     puts_err(e.output)
+                    raise
                 else:
                     puts("Output: %s" % output)
 
@@ -252,6 +253,11 @@ if __name__ == "__main__":
                     for i in items:
                         puts(colored.green("%s" % i))
                         with indent(2):
-                            if 'item_action' in this_src_conf:
-                                i.shell_action(this_src_conf['item_action'])
-                            s.metadata_db.add_processed(i.key)
+                            try:
+                                if 'item_action' in this_src_conf:
+                                    i.shell_action(this_src_conf['item_action'])
+                            except subprocess.CalledProcessError as e:
+                                pass
+                            else:
+                                # Mark as processed - but only if successful
+                                s.metadata_db.add_processed(i.key)
