@@ -67,7 +67,7 @@ Global config follows the format:
 | Section | Key | Default | Description |
 |---|---|---|---|
 | `sources` | `sources_dir` | - | Directory to look in for per-source configs.  If it starts with a `/` it's treated as an absolute path; without and it's relative to the dir the main config file was in. |
-| `metadata` | `metadata_path` | - | Directory in which locks &amp; per-source metadata will be stored |
+| `metadata` | `metadata_path` | - | Directory in which locks &amp; per-source metadata will be stored in SQLite format. |
 
 
 Per-source config must be:
@@ -133,9 +133,9 @@ $ . _venv3/bin/activate
 
 ## Implementation Notes
 
-* To ensure no item gets processed twice, information on each stream is stored in a .json file within `data/` 
+* To ensure no item gets processed twice, once handled media item keys are written to a small SQLite DB is maintained under `data/`.  I tried a simpler approach (ignoring anything from before the script's last run) but it seems there's sometimes a delay between media uploads and the item becoming available, and this meant unseen items could fall before the script's previous run.
 * Coloured/indented output with [clint](https://github.com/kennethreitz/clint)
-* Limited test coverage via basic Python unittest module
+* Some test coverage via basic Python unittest module
 
 
 ## Meta

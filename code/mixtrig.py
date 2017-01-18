@@ -18,7 +18,7 @@ import filelock
 
 
 from cli_parser import cliparser
-from metadata import Metadata
+from mctdb import MixCloudSeenDB
 
 
 
@@ -33,15 +33,16 @@ class MixCloudItem(object):
     # self.xx properties passed in action commands
     ACTION_VARS = ['type', 'name', 'url', 'created_time']
 
-    def __init__(self, t, name, url, created_time):
+    def __init__(self, t, k, name, url, created_time):
         super(MixCloudItem, self).__init__()
         self.type           = t
+        self.key            = k
         self.name           = name
         self.url            = url
         self.created_time   = du_parse(created_time)
     
     def __str__(self):
-        return "<%s (%s) - '%s' @ %s>" % (self.__class__.__name__, self.type, self.name, self.created_time)
+        return "<%s (%s) - '%s' @ %s; key=%s>" % (self.__class__.__name__, self.type, self.name, self.created_time, self.key)
     
     
     def _escaped_shell_vars(self):
@@ -89,9 +90,6 @@ class MixCloudSource(object):
     
     # Metadata handling
     METADATA_SUBDIR     = "mixcloud"
-    DEFAULT_METADATA    = {
-        'last_scrape': 0
-    }
     
     def __init__(self, gconf, source_name, source_conf, verbose=False):
         super(MixCloudSource, self).__init__()
@@ -99,10 +97,9 @@ class MixCloudSource(object):
         self.source_name    = source_name
         self.source_conf    = source_conf
         self.verbose        = verbose
-        self.metadata       = Metadata(
-            self._metadata_path_name(), 
-            self.DEFAULT_METADATA,
-            verbose=self.verbose 
+        self.metadata_db    = MixCloudSeenDB(
+            self._metadata_db_name(),
+            verbose=self.verbose
         )
         self.n_yielded      = 0
 
@@ -113,7 +110,7 @@ class MixCloudSource(object):
 
     
     def __exit__(self, type, value, traceback):
-        self.metadata.save()
+        pass
     
     
     def _get_data(self, *args):
@@ -126,7 +123,8 @@ class MixCloudSource(object):
         for cc in data['cloudcasts']:
             try:
                 yield MixCloudItem(
-                    t, 
+                    t,
+                    cc['key'],
                     cc['name'], 
                     cc['url'], cc['created_time']
                 )
@@ -145,21 +143,10 @@ class MixCloudSource(object):
     }
 
 
-    def last_scrape_str(self):
-        """Return printable string representing last scrape point"""
-        if self.metadata['last_scrape']:
-            dt = datetime.datetime.utcfromtimestamp(self.metadata['last_scrape'])
-            return dt.strftime(PRINTABLE_DATETIME_FORMAT)
-        else:
-            return "never"
-
-
-    def get_new_items(self, want_types=None, force_all=False):
+    def get_unprocessed_items(self, want_types=None, force_all=False):
         """Return new items we found"""
         wt = self.source_conf.get('want_types', 'upload,favorite').split(',')
         j = self._get_data()
-        # pp = pprint.PrettyPrinter(indent=4)
-        # pp.pprint(self.metadata)
         
         n_items     = 0
         max_items   = self.source_conf.getint('max_items', None)
@@ -167,19 +154,21 @@ class MixCloudSource(object):
         for obj in j['data']:
             t = obj['type']
             if t in wt:
+                # pp = pprint.PrettyPrinter(indent=4)
+                # pp.pprint(obj)
                 funk = self.TYPE_MAP.get(t, None)
                 if funk:
                     for mci in funk(self, obj):
                         ctime_epoch = float( mci.created_time.strftime("%s") )
-                        if force_all or ctime_epoch > self.metadata['last_scrape']:
+                        if force_all or not self.metadata_db.is_processed(mci.key):
                             if n_items < max_items or max_items is None:
                                 yield mci
+                                n_items += 1  # Counting feed items, not cc's
                             else:
                                 puts(colored.red("Ignored (> max_items): %s" % mci))
                         else:
                             if self.verbose:
-                                puts(colored.red("Ignored (before last scrape): %s" % mci))
-                    n_items += 1  # Counting feed items, not cc's
+                                puts(colored.red("Already processed: %s" % mci))
                     if max_items:
                         if not force_all:
                             if n_items == max_items:
@@ -190,11 +179,9 @@ class MixCloudSource(object):
                     # pp = pprint.PrettyPrinter(indent=4)
                     # pp.pprint(obj)
                     # sys.exit(0)
-        
-        self.metadata['last_scrape'] = time.time()
 
     
-    def _metadata_path_name(self):
+    def _metadata_db_name(self):
         """Figure out where to keep this source's Metadata"""
         my_metadata_dir = os.path.join(
             self.global_conf['metadata']['metadata_path'],
@@ -202,7 +189,7 @@ class MixCloudSource(object):
         )
         if not os.path.isdir(my_metadata_dir):
             os.makedirs(my_metadata_dir)
-        return os.path.join(my_metadata_dir, self.source_name+'.json')
+        return os.path.join(my_metadata_dir, self.source_name+'.db')
 
 
         
@@ -213,6 +200,10 @@ class MixCloudSourceFeed(MixCloudSource):
         r = requests.get('https://api.mixcloud.com/%s/feed/' % self.source_name)
         j = r.json()
         return j
+
+
+
+
 
 
 if __name__ == "__main__":
@@ -257,12 +248,10 @@ if __name__ == "__main__":
             for source_name in sconf.sections():
                 this_src_conf = sconf[source_name]
                 with MixCloudSourceFeed(gconf, source_name, this_src_conf, verbose=args.verbose) as s:
-                    if args.verbose:
-                        puts("Last scrape: %s" % s.last_scrape_str())
-                    items = s.get_new_items(force_all=args.all)
+                    items = s.get_unprocessed_items(force_all=args.all)
                     for i in items:
                         puts(colored.green("%s" % i))
                         with indent(2):
                             if 'item_action' in this_src_conf:
                                 i.shell_action(this_src_conf['item_action'])
-
+                            s.metadata_db.add_processed(i.key)
